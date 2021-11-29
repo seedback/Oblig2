@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Test Suite</title>
+<link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.17.2.css">
+
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<script src="https://code.jquery.com/qunit/qunit-2.17.2.js"></script>
+	<script src="autoclicker.js"></script>
+	<script>
+		function updateView() { };
+
+		// Controller
+
+		QUnit.module('doClick()', function () {
+			QUnit.test('points increase', function (assert) {
+				// Testing that points increase according to pointsPerClick when doClick() is called
+				model.points = 0;
+				model.pointsPerClick = 1;
+				doClick();
+
+				let actual = model.points;
+				let expected = 1;
+
+				assert.equal(actual, expected, "points goes from 0 to 1 when doClick() is called and pointsPerClick is 1");
+				// Doublechecking that the test will fail if we expect something else than points + pointsPerClick
+				assert.notEqual(actual, expected + 357, "points do not go from 0 to 2 when doClick is called and pointsPerClick is 1");
+
+				// Testing that points increase according to pointsPerClick when doClick() is called when points start at another number than 0
+				model.points = 654;
+				model.pointsPerClick = 1;
+				doClick();
+
+				actual = model.points;
+				expected = 655;
+
+				assert.equal(actual, expected, "points goes from 0 to 1 when doClick() is called and pointsPerClick is 1");
+				// Doublechecking that the test will fail if we expect something else than points + pointsPerClick
+				assert.notEqual(actual, expected + 1, "points do not go from 0 to 2 when doClick is called and pointsPerClick is 1");
+
+				// Testing that points increase according to pointsPerClick when doClick() is called when pointsPerClick start at another number than 1
+				model.points = 0;
+				model.pointsPerClick = 258;
+				doClick();
+
+				actual = model.points;
+				expected = 258;
+
+				assert.equal(actual, expected, "points goes from 0 to 1 when doClick() is called and pointsPerClick is 1");
+				// Doublechecking that the test will fail if we expect something else than points + pointsPerClick
+				assert.notEqual(actual, expected + 1, "points do not go from 0 to 2 when doClick is called and pointsPerClick is 1");
+
+				// Testing that points increase according to pointsPerClick when doClick() is called when pointsPerClick start at another number than 1
+				model.points = 654;
+				model.pointsPerClick = 258;
+				doClick();
+
+				actual = model.points;
+				expected = 912;
+
+				assert.equal(actual, expected, "points goes from 0 to 1 when doClick() is called and pointsPerClick is 1");
+				// Doublechecking that the test will fail if we expect something else than points + pointsPerClick
+				assert.notEqual(actual, expected + 1, "points do not go from 0 to 2 when doClick is called and pointsPerClick is 1");
+			});
+
+			QUnit.test('Test smiley index rotation', function (assert) {
+				model.smileyIndex = -1;
+
+				doClick();
+				let actual = model.smileyIndex;
+				let expected = 0;
+
+				assert.equal(actual, expected, 'Smiley switched from pre-game smiley to smiley #1');
+
+				doClick();
+				actual = model.smileyIndex;
+				expected = 1;
+
+				assert.equal(actual, expected, 'Smiley switched from smiley #1 to smiley #2');
+
+				doClick();
+				actual = model.smileyIndex;
+				expected = 2;
+
+				assert.equal(actual, expected, 'Smiley switched from smiley #2 to smiley #3');
+
+				doClick();
+				actual = model.smileyIndex;
+				expected = 0;
+
+				assert.equal(actual, expected, 'Smiley rolled back from smiley #3 to smiley #1');
+			});
+		});
+
+		QUnit.module('buyWorkstation()', function () {
+			QUnit.test('Attempt purchase of one workstation, with exact change, no discount', function (assert) {
+				model.points = model.workstationDefaultPrice;
+				model.pointsPerClick = 1;
+				model.priceOfWorkstation = model.workstationDefaultPrice;
+				model.numWorkstations = 0;
+				assert.equal(buyWorkstation(1, 0), true, 'Bought workstation successfully');
+				assert.equal(model.points, 0, 'No more points after buying workstation');
+				assert.equal(model.priceOfWorkstation, model.workstationDefaultPrice + model.workstationPriceIncrease, 'The price of buying a workstation has increased by 2 points');
+				assert.strictEqual(model.pointsPerClick, 1 + model.workstationWorkIncrease, 'The amount of points per click has increased by 0.1');
+				assert.equal(model.numWorkstations, 1, 'The number of workstations has increased');
+			});
+			QUnit.test('Attempt purchase of multiple workstation, with exact change, no discount', function (assert) {
+				model.points = costOfMultipleUpgrades(model.workstationDefaultPrice, model.workstationPriceIncrease, 5, 0);
+				model.pointsPerClick = 1;
+				model.priceOfWorkstation = model.workstationDefaultPrice;
+				model.numWorkstations = 0;
+				assert.equal(buyWorkstation(5, 0), true, 'Bought workstation successfully');
+				assert.equal(model.points, 0, 'No more points after buying workstation');
+				assert.equal(model.priceOfWorkstation, 10 + model.workstationPriceIncrease * 5, 'The price of buying a workstation has increased by 10 points');
+				assert.strictEqual(model.pointsPerClick, 1 + model.workstationWorkIncrease * 5, 'The amount of points per click has increased by 0.5');
+				assert.equal(model.numWorkstations, 5, 'The number of workstations has increased');
+			});
+			QUnit.test('Attempt purchase of multiple workstation, with points to spare, and discount', function (assert) {
+				model.points = costOfMultipleUpgrades(model.workstationDefaultPrice, model.workstationPriceIncrease, 5, model.workstationDiscounts[0]) + 35;
+				model.pointsPerClick = 1;
+				model.priceOfWorkstation = model.workstationDefaultPrice;
+				model.numWorkstations = 0;
+				assert.equal(buyWorkstation(5, 5), true, 'Bought workstation successfully');
+				assert.equal(model.points, 35, 'No more points after buying workstation');
+				assert.equal(model.priceOfWorkstation, model.workstationDefaultPrice + model.workstationPriceIncrease * 5, 'The price of buying a workstation has increased by 10 points');
+				assert.strictEqual(model.pointsPerClick, 1 + model.workstationWorkIncrease * 5, 'The amount of points per click has increased by 0.5');
+				assert.equal(model.numWorkstations, 5, 'The number of workstations has increased');
+			});
+			QUnit.test('Attempt purchase of one workstation, without enough points, no discount', function (assert) {
+				model.points = model.workstationDefaultPrice / 2;
+				model.pointsPerClick = 1;
+				model.priceOfWorkstation = model.workstationDefaultPrice;
+				model.numWorkstations = 0;
+				assert.equal(buyWorkstation(1, 0), false, 'Bought workstation successfully');
+				assert.equal(model.points, model.workstationDefaultPrice / 2, 'No more points after buying workstation');
+				assert.equal(model.priceOfWorkstation, model.workstationDefaultPrice, 'The price of buying a workstation has increased by 2 points');
+				assert.strictEqual(model.pointsPerClick, 1, 'The amount of points per click has increased by 0.1');
+				assert.equal(model.numWorkstations, 0, 'The number of workstations has increased');
+			});
+		});
+
+		QUnit.module('buyFriend()', function () {
+			QUnit.test('Attempt purchase of one friend, with exact change, no discount', function (assert) {
+				model.points = model.friendDefaultPrice;
+				model.autoClicksPerSecond = 0;
+				model.priceOfFriend = model.friendDefaultPrice;
+				model.numFriends = 0;
+				assert.equal(buyFriend(1, 0), true, 'Bought friend successfully');
+				assert.equal(model.points, 0, 'No more points after buying friend');
+				assert.equal(model.priceOfFriend, model.friendDefaultPrice + model.friendPriceIncrease, `The price of buying a friend has increased by ${model.friendPriceIncrease} points`);
+				assert.strictEqual(model.autoClicksPerSecond, 0 + model.friendWorkIncrease, `The amount of points per click has increased by ${model.friendWorkIncrease}`);
+				assert.equal(model.numFriends, 1, 'The number of friends has increased');
+			});
+			QUnit.test('Attempt purchase of multiple friends, with exact change, no discount', function (assert) {
+				model.points = costOfMultipleUpgrades(model.friendDefaultPrice, model.friendPriceIncrease, 5, 0);
+				model.autoClicksPerSecond = 0;
+				model.priceOfFriend = model.friendDefaultPrice;
+				model.numFriends = 0;
+				assert.equal(buyFriend(5, 0), true, 'Bought friend successfully');
+				assert.equal(model.points, 0, 'No more points after buying friend');
+				assert.equal(model.priceOfFriend, model.friendDefaultPrice + model.friendPriceIncrease * 5, `The price of buying a friend has increased by ${model.friendPriceIncrease * 5} points`);
+				assert.strictEqual(model.autoClicksPerSecond, 0 + model.friendWorkIncrease * 5, `The amount of points per click has increased by ${model.friendWorkIncrease * 5}`);
+				assert.equal(model.numFriends, 5, 'The number of friends has increased');
+			});
+			QUnit.test('Attempt purchase of multiple friend, with points to spare, and discount', function (assert) {
+				model.points = costOfMultipleUpgrades(model.friendDefaultPrice, model.friendPriceIncrease, 5, model.friendDiscounts[0]) + 215;
+				model.autoClicksPerSecond = 0;
+				model.priceOfFriend = model.friendDefaultPrice;
+				model.numFriends = 0;
+				assert.equal(buyFriend(5, model.friendDiscounts[0]), true, 'Bought friend successfully');
+				assert.equal(model.points, 215, 'No more points after buying friend');
+				assert.equal(model.priceOfFriend, model.friendDefaultPrice + model.friendPriceIncrease * 5, `The price of buying a friend has increased by ${model.friendPriceIncrease * 5} points`);
+				assert.strictEqual(model.autoClicksPerSecond, 0 + model.friendWorkIncrease * 5, `The amount of points per click has increased by ${model.friendWorkIncrease * 5}`);
+				assert.equal(model.numFriends, 5, 'The number of friends has increased');
+			});
+			QUnit.test('Attempt purchase of one friend, without enough points, no discount', function (assert) {
+				model.points = model.friendDefaultPrice / 2;
+				model.autoClicksPerSecond = 0;
+				model.priceOfFriend = model.friendDefaultPrice;
+				model.numFriends = 0;
+				assert.equal(buyFriend(1, 0), false, `Friend can't be bought`);
+				assert.equal(model.points, model.friendDefaultPrice / 2, 'No more points after buying friend');
+				assert.equal(model.priceOfFriend, model.friendDefaultPrice, `The price of buying a friend stayed the same since no friend was bought`);
+				assert.strictEqual(model.autoClicksPerSecond, 0, 'the amount of ');
+				assert.equal(model.numFriends, 0, 'The number of friends has increased');
+			});
+		});
+
+		QUnit.module('submitScore()', function () {
+			QUnit.test('testing submitScore()', function (assert) {
+				model.currentName = 'Terje';
+				model.points = 0;
+				model.pointsPerClick = 1;
+				model.autoClicksPerSecond = 0;
+				model.autoPointsPerSecond = 0;
+				submitScore();
+				assert.equal(model.scoreboard.length, 1, `Entry sucessfully added to the scoreboard`);
+				assert.equal(model.scoreboard[0].name, `Terje`, `Name of first entry is correct`);
+				assert.equal(model.scoreboard[0].points, 0, `Points of first entry is correct`);
+				assert.equal(model.scoreboard[0].pointsPerClick, 1, `pointsPerClick of first entry is correct`);
+				assert.equal(model.scoreboard[0].autoClicksPerSecond, 0, `autoClicksPerSecond of first entry is correct`);
+				assert.equal(model.scoreboard[0].autoPointsPerSecond, 0, `autoPointsPerSecond of first entry is correct`);
+				model.currentName = 'Therese';
+				model.points = 654;
+				model.pointsPerClick = 741;
+				model.autoClicksPerSecond = 123;
+				model.autoPointsPerSecond = 987;
+				submitScore();
+				assert.equal(model.scoreboard.length, 2, `Entry sucessfully added to the scoreboard`);
+				assert.equal(model.scoreboard[1].name, `Therese`, `Name of first entry is correct`);
+				assert.equal(model.scoreboard[1].points, 654, `Points of first entry is correct`);
+				assert.equal(model.scoreboard[1].pointsPerClick, 741, `pointsPerClick of first entry is correct`);
+				assert.equal(model.scoreboard[1].autoClicksPerSecond, 123, `autoClicksPerSecond of first entry is correct`);
+				assert.equal(model.scoreboard[1].autoPointsPerSecond, 987, `autoPointsPerSecond of first entry is correct`);
+			});
+		});
+
+		QUnit.module('resetGame()', function () {
+			QUnit.test('everything is reset', function (assert) {
+				model.points = 25;
+				model.pointsPerClick = 100;
+				model.smileyIndex = 2;
+
+				model.clicksPerSecond = 1;
+				model.lastClicksSeconds = [1, 0.5, 2, 0.3, 5, 7, 2, 9, 4, 12];
+				model.lastClickTime = 999999; // A time close to the start of the epoch (aka. not any time near now)
+
+				model.autoClicksPerSecond = 10;
+				model.autoPointsPerSecond = 10;
+				model.autoClickTimerID = 200;
+
+				model.numWorkstations = 20;
+				model.priceOfWorkstation = 100;
+
+				model.numFriends = 20;
+				model.priceOfFriend = 1000;
+
+				startAutoClicks();
+
+				resetGame();
+				assert.equal(model.points, 0, 'points get reset to 0');
+				assert.equal(model.pointsPerClick, model.defaultPointsPerClick, `pointsPerClick get reset to defaultPointsPerClick (${model.defaultPointsPerClick})`);
+				assert.equal(model.smileyIndex, -1, 'smileyIndex get reset to -1');
+
+				assert.equal(model.clicksPerSecond, 0, 'clicksPerSecond get reset to 0');
+				assert.deepEqual(model.lastClicksSeconds, [], 'lastClicksSeconds get reset to []');
+				assert.ok(model.lastClickTime > (new Date).getTime() - 50, 'lastClickTime get reset to a time within the last 50ms in case of delays and such');
+
+				assert.equal(model.autoClicksPerSecond, 0, 'autoClicksPerSecond get reset to 0');
+				assert.equal(model.autoPointsPerSecond, 0, 'autoPointsPerSecond get reset to 0');
+				assert.equal(model.autoClickTimerID, 0, 'autoClickTimerID get reset to 0');
+
+				assert.equal(model.priceOfWorkstation, model.workstationDefaultPrice, `priceOfWorkstation get reset to workstationDefaultPrice (${model.workstationDefaultPrice})`);
+				assert.equal(model.numWorkstations, 0, 'points get reset to 0');
+
+				assert.equal(model.priceOfWorkstation, model.workstationDefaultPrice, `priceOfWorkstation get reset to workstationDefaultPrice (${model.workstationDefaultPrice})`);
+				assert.equal(model.numWorkstations, 0, 'points get reset to 0');
+
+				const done = assert.async();
+				setTimeout(res => {
+					assert.equal(model.points, 0, "Checking that all autoclickers and such are disabled by checking points after one second\nOBS: about 50% of the time this test gives a false negative with 1 point, I believe this is because of JavaScript's clearInterval() being asyncronous")
+					done();
+				}, 1000);
+			});
+		});
+
+		// Helper functions
+
+		QUnit.module('startAutoClicks()', function () {
+			QUnit.test('Works correctly when autoClicksPerSecond is positive and non-zero', function (assert) {
+				model.autoClicksPerSecond = 7;
+				startAutoClicks(); // generates first id in case it doesn't exist yet
+				let curID = model.autoClickTimerID;
+				startAutoClicks(); // runs again to actually test it
+				assert.notEqual(curID, model.autoClickTimerID, 'New timer has been made');
+			});
+			QUnit.test('Works correctly when autoClicksPerSecond is negative', function (assert) {
+				model.autoClicksPerSecond = 7;
+				startAutoClicks(); // generates first id in case it doesn't exist yet
+				model.autoClicksPerSecond = -1;
+				startAutoClicks(); // runs again to actually test it
+				assert.equal(model.autoClickTimerID, 0, `There shouldn't currently be a timer (autoClickTimerID should be 0)`);
+			});
+			QUnit.test('Works correctly when autoClicksPerSecond is zero', function (assert) {
+				model.autoClicksPerSecond = 7;
+				startAutoClicks(); // generates first id in case it doesn't exist yet
+				model.autoClicksPerSecond = 0;
+				startAutoClicks(); // runs again to actually test it
+				assert.equal(model.autoClickTimerID, 0, `There shouldn't currently be a timer (autoClickTimerID should be 0)`);
+			});
+		});
+
+		QUnit.module('getSmiley()', function () {
+			QUnit.test('Test all indexes from -5 to 10, 0nly -1 to 2 should give a result', function (assert) {
+				for (let i = -5; i <= 10; i++) {
+					if (i == -1) assert.equal(getSmiley(i), '😐', `index ${i} gave '😐'`);
+					else if (i == 0) assert.equal(getSmiley(i), '🙂', `index ${i} gave '🙂'`);
+					else if (i == 1) assert.equal(getSmiley(i), '😃', `index ${i} gave '😃'`);
+					else if (i == 2) assert.equal(getSmiley(i), '😁', `index ${i} gave '😁'`);
+					else assert.equal(getSmiley(i), ``, `index ${i} gave ''`);
+				}
+			});
+		});
+
+		QUnit.module('getNextSmileyIndex()', function () {
+			QUnit.test('Tests index rotation from 0 to 2 and back to 0', function (assert) {
+				assert.equal(getNextSmileyIndex(0), 1, 'Index 0 became 1');
+				assert.equal(getNextSmileyIndex(1), 2, 'Index 1 became 2');
+				assert.equal(getNextSmileyIndex(2), 0, 'Index 2 became 0');
+			});
+			QUnit.test('Test index starts at -1 (the unclicked face)', function (assert) {
+				assert.equal(getNextSmileyIndex(-1), 0, 'Index 0 became 1');
+			})
+			QUnit.test('Test index starts below legal values', function (assert) {
+				assert.equal(getNextSmileyIndex(-5), -1, 'A too low index got reset to the lowest "legal" index');
+			})
+			QUnit.test('Test index starts above legal values', function (assert) {
+				assert.equal(getNextSmileyIndex(10), 0, 'A too low index got reset to 0 to restart the index rotation');
+			})
+		});
+
+		QUnit.module('addWithToFixed()', function () {
+			QUnit.test('All true', function (assert) {
+				// Since last parameter is omitted, the precision defaults to 1 decimal
+				let actual = addWithToFixed(2, 3);
+				let expected = 5.0.toFixed(1);
+				assert.equal(actual, expected, 'Testing normal usecase (adding two ints with 1 decimal)');
+				actual = addWithToFixed(7.03, 12);
+				expected = 19;
+				assert.equal(actual, expected, 'Testing with more decimals than precision allows (rounding down)');
+				actual = addWithToFixed(4, 6.08);
+				expected = 10.1;
+				assert.equal(actual, expected, 'Testing with more decimals than precision allows (rounding up)');
+				actual = addWithToFixed(7.0003, 12, 3);
+				expected = 19;
+				assert.equal(actual, expected, 'Testing with more decimals than precision allows when precision is defined higher than default (rounding down)');
+				actual = addWithToFixed(4, 6.0008, 3);
+				expected = 10.001;
+				assert.equal(actual, expected, 'Testing with more decimals than precision allows when precision is defined higher than default (rounding up)');
+			});
+			QUnit.test('All false', function (assert) {
+				let actual = addWithToFixed(2, 3);
+				let expected = 6.0.toFixed(1);
+				assert.notEqual(actual, expected, '2 + 3 with a precision of 1 is 5.0 actual: ' + actual + ' expected: ' + expected);
+				actual = addWithToFixed(7.201, 12.1, 5);
+				expected = 19.3;
+				assert.notEqual(actual, expected, 'non-default precision works (7.201 + 12.1 with a precision of 5 is 19.3). actual: ' + actual + ' expected: ' + expected);
+			});
+		});
+
+		QUnit.module('costOfMultipleUpgrades()', function () {
+			QUnit.test('All combinations', function (assert) {
+				// First one costs 10, price increases with 2 per purchase, we buy one, (since last parameter is ommitted there is no discount)
+				// This is default, all subsequent tests will be based on these values
+				let actual = costOfMultipleUpgrades(10, 2, 1);
+				let expected = 10;
+				assert.equal(actual, expected, 'Correct pricing from buying a single upgrade with no discounts');
+
+				// Same as default values, but each upgrade costs 25
+				actual = costOfMultipleUpgrades(25, 2, 1);
+				expected = 25;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25');
+
+				// Same as default values, but each purchase increases the price by 5
+				actual = costOfMultipleUpgrades(10, 5, 1);
+				expected = 10;
+				assert.equal(actual, expected, 'Correct pricing from each purchase increasing the price by 5');
+
+				// Same as default values, but buying 3 upgrades
+				actual = costOfMultipleUpgrades(10, 2, 3);
+				expected = 10 + 12 + 14;
+				assert.equal(actual, expected, 'Correct pricing from buying 3 upgrades');
+
+				// Same as default values, but with 5 points discount
+				actual = costOfMultipleUpgrades(10, 2, 1, 5);
+				expected = 10 - 5
+				assert.equal(actual, expected, 'Correct pricing from 5 points discount');
+
+				// Same as default values, but the base price is 25 AND each purchase increases the price by 5
+				actual = costOfMultipleUpgrades(25, 5, 1);
+				expected = 25;
+				assert.equal(actual, expected, 'Correct pricing the base price being 25 AND each purchase increasing the price by 5');
+
+				// Same as default values, but the base price is 25 AND we buy 5 upgrades
+				actual = costOfMultipleUpgrades(25, 2, 5);
+				expected = 25 + 27 + 29 + 31 + 33;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25 AND we buy 5 upgrades');
+
+				// Same as default values, but the base price is 25 AND 5 points discount
+				actual = costOfMultipleUpgrades(25, 2, 1, 5);
+				expected = 25 - 5;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25 AND 5 points discount');
+
+				// Same as default values, but the base price is 25 AND each purchase increases the price by 5
+				// AND we buy 5 upgrades at once
+				actual = costOfMultipleUpgrades(25, 5, 5);
+				expected = 25 + 30 + 35 + 40 + 45;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25 AND each purchase increasing the price by 5 AND we buy 5 upgrades at once');
+
+				// Same as default values, but the base price is 25 AND each purchase increases the price by 5
+				// AND 5 points discount
+				actual = costOfMultipleUpgrades(25, 5, 1, 5);
+				expected = 25 - 5;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25 AND each purchase increasing the price by 5 AND 5 points discount');
+
+				// Same as default values, but each the base price is 25 AND we buy 5 upgrades
+				// AND 5 points discount
+				actual = costOfMultipleUpgrades(25, 2, 5, 5);
+				expected = 25 + 27 + 29 + 31 + 33 - 5;
+				assert.equal(actual, expected, 'Correct pricing from the base price being 25 AND we buy 5 upgrades AND 5 points discount');
+
+				// Same as default values, but each purchase increases the price by 5 AND we buy 5 upgrades
+				// AND 5 points discount
+				actual = costOfMultipleUpgrades(10, 5, 5, 5);
+				expected = 10 + 15 + 20 + 25 + 30 - 5;
+				assert.equal(actual, expected, 'Correct pricing from each purchase increasing the price by 5 AND we buy 5 upgrades AND 5 points discount');
+
+				// Same as default values, but each the base price is 25 AND each purchase increases the price by 5
+				// AND we buy 5 upgrades AND 5 points discount 
+				actual = costOfMultipleUpgrades(10, 5, 5, 5);
+				expected = 10 + 15 + 20 + 25 + 30 - 5;
+				assert.equal(actual, expected, 'Correct pricing from each the base price being 25 AND each purchase increasing the price by 5 AND we buy 5 upgrades AND 5 points discount ');
+			});
+		});
+
+		QUnit.module('calculateClicksPerSecond()', function () {
+			QUnit.test('All combinations', function (assert) {
+				resetGame();
+
+				const done = assert.async();
+				setTimeout(res => {
+					calculateClicksPerSecond()
+					assert.ok(model.lastClicksSeconds[0] > 0.45 && model.lastClicksSeconds[0] < 0.55, `lastClicksSeconds[0] was ${model.lastClicksSeconds[0]}`)
+					assert.ok(model.clicksPerSecond > 0.45 && model.clicksPerSecond < 0.55, `average clicksPerSecond was ${model.clicksPerSecond}, is close enough to 0.5`)
+					done();
+
+					const done2 = assert.async();
+					setTimeout(res => {
+						calculateClicksPerSecond()
+						assert.ok(model.lastClicksSeconds[1] > 0.700 && model.lastClicksSeconds[1] < 0.800, `lastClicksSeconds[1] was ${model.lastClicksSeconds[1]}`)
+						assert.ok(model.clicksPerSecond > 0.575 && model.clicksPerSecond < 0.675, `average clicksPerSecond was ${model.clicksPerSecond}, is close enough to 0.625`)
+						console.log(model.lastClicksSeconds);
+						done2();
+					}, 750);
+				}, 500);
+
+			});
+		});
+
+		QUnit.module('calculateStatisticsOutput()', function () {
+			QUnit.test('Testing calculateStatisticsOutput()', function (assert) {
+				assert.deepEqual(calculateStatisticsOutput(0, 'a', 'b'), '0.000 a', `calculated for a value of 0 correctly`);
+				assert.deepEqual(calculateStatisticsOutput(0.5, 'a', 'b'), '2.000 a', `calculated for a value of less than 1 and not 0 correctly`);
+				assert.deepEqual(calculateStatisticsOutput(1, 'a', 'b'), '1.000 b', `calculated for a value of 1 correctly`);
+				assert.deepEqual(calculateStatisticsOutput(2, 'a', 'b'), '2.000 b', `calculated for a value of greater than 1 correctly`);
+			});
+		});
+	</script>
+</body>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<title></title>
+	<style>
+		body {
+			background-color: tan;
+		}
+
+		.image,
+		.pointsInfo {
+			font-size: 900%;
+			user-select: none;
+			width: fit-content;
+			height: fit-content;
+		}
+
+		.statisticsDiv {
+			background-color: rgb(255, 199, 176);
+			border: 1px black solid;
+			width: fit-content;
+			height: fit-content;
+			padding: 3px 6px;
+			font-size: 100%;
+		}
+
+		.resetButton {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+		}
+
+		.upgrade {
+			width: fit-content;
+			border: solid black 1px;
+			background-color: lightgrey;
+			display: flex;
+			min-width: 550px;
+		}
+
+		.upgrade:hover {
+			background-color: rgb(184, 184, 184);
+		}
+
+		.upgradeText {
+			text-align: center;
+		}
+
+		.upgradeButton {
+			text-align: center;
+			flex: 1;
+		}
+
+		.upgradeText,
+		.upgradeButton {
+			width: 150px;
+		}
+
+		.pointsInfo {
+			white-space: nowrap;
+		}
+
+		th, td, tr, table{
+			border: black 1px solid;
+			border-collapse: collapse;
+			border-spacing: 0px;
+			padding: 3px 10px;
+		}
+
+		table{
+			margin-top: 10px;
+			min-width: 550px;
+		}
+
+		.scoreboardName{
+			text-align: left;
+		}
+
+		.scoreboardData{
+			text-align: right;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app"></div>
+	<script src="autoclicker.js"></script>
+	<script>
+		// ##########################
+		// ###										###
+		// ###       MODEL        ###
+		// ###										###
+		// ##########################
+
+		model.points = 0; // The amount of points the player has
+		model.pointsPerClick = model.defaultPointsPerClick // The amount of points the player gets per click
+		model.smileyIndex = -1; // The index of which smiley/emoji to use at any
+		// given time(changes every time the
+		// click-target (emoji) gets clicked)
+
+		// Used to store the average amount of clicks per seconds over the last 10 seconds
+		model.clicksPerSecond = 0;
+		model.lastClicksSeconds = []; // Stores the time in seconds for the last x amount of clicks
+		model.lastClickTime = (new Date).getTime(); // The last time in Date.getTime ms used to
+		// calculate the time the last click took
+
+		model.autoClicksPerSecond = 0; // Is affected by pointsPerClick (Workstation upgrades and similar)
+		model.autoPointsPerSecond = 0; // Is NOT affected by pointsPerClick (Workstation upgrades and similar)
+		model.autoClickTimerID = 0;
+
+		// Workstations
+		model.numWorkstations = 0; // Counter for number of upgrades
+		model.priceOfWorkstation = model.workstationDefaultPrice; // The current price for an upgrde
+		// By having workstationPriceIncrease bigger than (1 / workstationWorkIncrease) the amount of
+		// clicks per upgrade also increases per upgrade bought, thus incentivising
+		// autoclickers more
+		model.numFriends = 0; // Counter for number of upgrades
+		model.priceOfFriend = model.friendDefaultPrice; // The current price for an upgrde
+
+    // By having friendWorkIncrease bigger than (1 / friendWorkIncrease) the amount of
+    // clicks per upgrade also increases per upgrade bought, thus incentivising
+    // later upgrades more
+	</script>
+
+	<script>
+
+		// ##########################
+		// ###										###
+		// ###        VIEW        ###
+		// ###										###
+		// ##########################
+		updateView();
+
+		function updateView() {
+			let html = ``;
+
+			// Gets the currently active smiley to use for the click-target
+			let smiley = getSmiley(model.smileyIndex);
+
+			// Create the big smiley that will change with every click
+			html += `<div class="image" onclick="doClick()">${smiley}</div>`;
+			// Create point-readout
+			html += `
+							<div class="pointsInfo">${model.points}</div>
+							<div class="statisticsDiv">
+							${calculateStatisticsOutput(model.clicksPerSecond, `clicks per second`, `seconds per click`)}<br/>
+							${calculateStatisticsOutput(model.autoClicksPerSecond, `seconds per automated click`, `automated clicks per second`)}<br/>
+							</div>
+			`;
+			// Create reset button that will be in the top-right of the screen
+			html += `<button class="resetButton" onclick="resetGame();">Reset</button>`;
+
+			// Open the upgrade-menu and adding in the title for it
+			html += `
+							<div id="upgradeMenu">
+								<div class="upgradeMenuTitle">
+									<h3 style="margin-bottom: 0px;">Upgrades:</h3>
+									<h5 style="margin-top: 0px;">(It's cheaper to buy multiple upgrades at once)</h5>
+								</div>
+			`;
+			// Create the main button for the points-per-click (PPC) upgrade
+			html += `
+							<div class="upgrade">
+								<div class="upgradeTextBg" onclick="buyWorkstation(1, 0)">
+									<h4 class="upgradeText">
+										Workstations (${model.numWorkstations})<br/>
+										(${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 1)} poeng)
+									</h4>
+								</div>
+			`;
+			// Add a button for buying 5 PPC upgrades at once with a 5 point discount (1 point per upgrade)
+			// and a button for buying 10 PPC upgrades at once with a 20 point discount (2 points per upgrade)
+			html += `
+							<button class="upgradeButton"onclick="buyWorkstation(5, ${model.workstationDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 5, model.workstationDiscounts[0])} points)<br/>(${model.workstationDiscounts[0]} point discount)</button>
+							<button class="upgradeButton"onclick="buyWorkstation(10, ${model.workstationDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 10, model.workstationDiscounts[0])} points)<br/>(${model.workstationDiscounts[1]} point discount)</button>
+			`;
+			// Closing the PPC upgrade div
+			html += `</div>`;
+
+			// Create the main button for the autoclicker upgrade
+			html += `
+							<div class="upgrade">
+								<div class="upgradeTextBg" onclick="buyFriend(1, 0)">
+									<h4 class="upgradeText">
+										"Friends" (${model.numFriends})<br/>
+										(${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 1)} points)
+									</h4>
+								</div>
+			`;
+			// Add a button for buying 5 PPC upgrades at once with a 5 point discount (1 point per upgrade)
+			// and a button for buying 10 PPC upgrades at once with a 20 point discount (2 points per upgrade)
+			html += `
+							<button class="upgradeButton"onclick="buyFriend(5, ${model.friendDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 5, model.friendDiscounts[0])} points)<br/>(${model.friendDiscounts[0]} point discount)</button>
+							<button class="upgradeButton"onclick="buyFriend(10, ${model.friendDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 10, model.friendDiscounts[1])} points)<br/>(${model.friendDiscounts[1]} point discount)</button>
+			`;
+			// Closing the PPC upgrade div
+			html += `</div>`;
+
+			// Closing the upgrade menu
+			html += `</div>`;
+
+			// Spacing
+			html += `</br></br></br>`
+
+			// Scoreboard
+			html += `
+							<div>
+								<input oninput="model.currentName = this.value" type="text" placeholder="Name" style="margin-right: 20px" value="${model.currentName}"/>
+								<button onclick="submitScore()">Submit score</button>
+								<table>
+									<tr>
+										<th class="scoreboardName">Name</th>
+										<th class="scoreboardData">Points</th>
+										<th class="scoreboardData">Points per click</th>
+										<th class="scoreboardData">Automatic clicks per second</th>
+										<!--<th>Automatic points per second</th>-->
+									</tr>
+			`;
+			
+			if (model.scoreboard.length == 0){
+				html += `
+								<tr>
+									<td class="scoreboardName"> - </td>
+									<td class="scoreboardData"> - </td>
+									<td class="scoreboardData"> - </td>
+									<td class="scoreboardData"> - </td>
+									<!--<td class="scoreboardData"> - </td>-->
+								</tr>
+				`
+			}
+			for(let i = 0; i < model.scoreboard.length; i++){
+				html += `
+								<tr>
+									<td class="scoreboardName">${model.scoreboard[i].name}</td>
+									<td class="scoreboardData">${model.scoreboard[i].points}</td>
+									<td class="scoreboardData">${model.scoreboard[i].pointsPerClick}</td>
+									<td class="scoreboardData">${model.scoreboard[i].autoClicksPerSecond}</td>
+									<!--<td class="scoreboardData">${model.scoreboard[i].autoPointsPerSecond}</td>-->
+								</tr>
+				`
+			}
+
+			html += `
+								</table>
+							</div>
+			`;
+
+			document.getElementById("app").innerHTML = html;
+		}
+	</script>
+</body>
+
+</html>
