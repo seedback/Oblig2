@@ -166,15 +166,15 @@
 								<div class="upgradeTextBg" onclick="buyWorkstation(1, 0)">
 									<h4 class="upgradeText">
 										Workstations (${model.numWorkstations})<br/>
-										(${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 1)} poeng)
+										(${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, model.workstationDiscounts[0])} poeng)
 									</h4>
 								</div>
 			`;
 			// Add a button for buying 5 PPC upgrades at once with a 5 point discount (1 point per upgrade)
 			// and a button for buying 10 PPC upgrades at once with a 20 point discount (2 points per upgrade)
 			html += `
-							<button class="upgradeButton"onclick="buyWorkstation(5, ${model.workstationDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 5, model.workstationDiscounts[0])} points)<br/>(${model.workstationDiscounts[0]} point discount)</button>
-							<button class="upgradeButton"onclick="buyWorkstation(10, ${model.workstationDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 10, model.workstationDiscounts[0])} points)<br/>(${model.workstationDiscounts[1]} point discount)</button>
+							<button class="upgradeButton"onclick="buyWorkstation(5, ${model.workstationDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 5, model.workstationDiscounts[1])} points)<br/>(${model.workstationDiscounts[1]} point discount)</button>
+							<button class="upgradeButton"onclick="buyWorkstation(10, ${model.workstationDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 10, model.workstationDiscounts[2])} points)<br/>(${model.workstationDiscounts[2]} point discount)</button>
 			`;
 			// Closing the PPC upgrade div
 			html += `</div>`;
@@ -185,15 +185,15 @@
 								<div class="upgradeTextBg" onclick="buyFriend(1, 0)">
 									<h4 class="upgradeText">
 										"Friends" (${model.numFriends})<br/>
-										(${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 1)} points)
+										(${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, model.workstationDiscounts[0])} points)
 									</h4>
 								</div>
 			`;
 			// Add a button for buying 5 PPC upgrades at once with a 5 point discount (1 point per upgrade)
 			// and a button for buying 10 PPC upgrades at once with a 20 point discount (2 points per upgrade)
 			html += `
-							<button class="upgradeButton"onclick="buyFriend(5, ${model.friendDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 5, model.friendDiscounts[0])} points)<br/>(${model.friendDiscounts[0]} point discount)</button>
-							<button class="upgradeButton"onclick="buyFriend(10, ${model.friendDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 10, model.friendDiscounts[1])} points)<br/>(${model.friendDiscounts[1]} point discount)</button>
+							<button class="upgradeButton"onclick="buyFriend(5, ${model.friendDiscounts[1]})">Buy 5 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 5, model.friendDiscounts[1])} points)<br/>(${model.friendDiscounts[1]} point discount)</button>
+							<button class="upgradeButton"onclick="buyFriend(10, ${model.friendDiscounts[2]})">Buy 10 (${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 10, model.friendDiscounts[2])} points)<br/>(${model.friendDiscounts[2]} point discount)</button>
 			`;
 			// Closing the PPC upgrade div
 			html += `</div>`;

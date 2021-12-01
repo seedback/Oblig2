@@ -28,7 +28,7 @@ var model = {
 	workstationDefaultPrice: 10,
 	workstationWorkIncrease: 0.1, // The the amount of more points you get per click, per upgrade
 	workstationPriceIncrease: 2, // The amount the price increases each time it is bought
-	workstationDiscounts: [5, 20], // List of the different discount levels for
+	workstationDiscounts: [0, 5, 20], // List of the different discount levels for
 	// buying workstations [0] = 1 workstation, [1] = 5 workstations, [2] = 10 workstations, [3] = 50 workstations, [4] = 100 workstations
 	numWorkstations: undefined, // Counter for number of upgrades
 	priceOfWorkstation: undefined, // The current price for an upgrde
@@ -38,9 +38,9 @@ var model = {
 
 
 	friendDefaultPrice: 100,
-	friendWorkIncrease: 0.2, // How many more autoclicks per second per upgrade
+	friendWorkIncrease: 0.1, // How many more autoclicks per second per upgrade
 	friendPriceIncrease: 5, // The amount the price increases each time it is bought
-	friendDiscounts: [120, 240], // List of the different discount levels for
+	friendDiscounts: [0, 120, 240], // List of the different discount levels for
 	// buying friends [0] = 1 friend, [1] = 5 friends, [2] = 10 friends, [3] = 50 friends, [4] = 100 friends
 	numFriends: undefined, // Counter for number of upgrades
 	priceOfFriend: undefined, // The current price for an upgrde
@@ -71,7 +71,9 @@ function buyWorkstation(number, discount) {
 		model.workstationPriceIncrease, number, discount);
 
 	// Escapes if you don't have enough points
-	if (model.points < totalCost) return false;
+	if (model.points < totalCost) {
+		return false;
+	}
 	// Updates the new score
 	// Uses addWithToFixed() to fix rounding errors caused by Javascript, and
 	// also make the numbers more readable
@@ -230,8 +232,7 @@ function calculateClicksPerSecond() {
 }
 
 function calculateStatisticsOutput(num, msg1, msg2) {
-	console.log();
 	if (num == 0) return `0.000 ${msg1}`
-	if (num >= 1) return `${num.toFixed(3)} ${msg2}`
-	return `${(1 / num).toFixed(3)} ${msg1}`
+	if (num >= 1) return `${parseFloat(num).toFixed(3)} ${msg2}`
+	return `${(1 / parseFloat(num)).toFixed(3)} ${msg1}`
 }
