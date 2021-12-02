@@ -62,23 +62,26 @@
 			white-space: nowrap;
 		}
 
-		th, td, tr, table{
+		th,
+		td,
+		tr,
+		table {
 			border: black 1px solid;
 			border-collapse: collapse;
 			border-spacing: 0px;
 			padding: 3px 10px;
 		}
 
-		table{
+		table {
 			margin-top: 10px;
 			min-width: 550px;
 		}
 
-		.scoreboardName{
+		.scoreboardName {
 			text-align: left;
 		}
 
-		.scoreboardData{
+		.scoreboardData {
 			text-align: right;
 		}
 	</style>
@@ -163,10 +166,10 @@
 			// Create the main button for the points-per-click (PPC) upgrade
 			html += `
 							<div class="upgrade">
-								<div class="upgradeTextBg" onclick="buyWorkstation(1, 0)">
+								<div class="upgradeTextBg" onclick="buyWorkstation(1, model.workstationDiscounts[0])">
 									<h4 class="upgradeText">
 										Workstations (${model.numWorkstations})<br/>
-										(${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, model.workstationDiscounts[0])} poeng)
+										(${costOfMultipleUpgrades(model.priceOfWorkstation, model.workstationPriceIncrease, 1, model.workstationDiscounts[0])} poeng)
 									</h4>
 								</div>
 			`;
@@ -182,10 +185,10 @@
 			// Create the main button for the autoclicker upgrade
 			html += `
 							<div class="upgrade">
-								<div class="upgradeTextBg" onclick="buyFriend(1, 0)">
+								<div class="upgradeTextBg" onclick="buyFriend(1, model.friendDiscounts[0])">
 									<h4 class="upgradeText">
 										"Friends" (${model.numFriends})<br/>
-										(${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, model.workstationDiscounts[0])} points)
+										(${costOfMultipleUpgrades(model.priceOfFriend, model.friendPriceIncrease, 1, model.friendDiscounts[0])} points)
 									</h4>
 								</div>
 			`;
@@ -218,8 +221,8 @@
 										<!--<th>Automatic points per second</th>-->
 									</tr>
 			`;
-			
-			if (model.scoreboard.length == 0){
+
+			if (model.scoreboard.length == 0) {
 				html += `
 								<tr>
 									<td class="scoreboardName"> - </td>
@@ -230,7 +233,8 @@
 								</tr>
 				`
 			}
-			for(let i = 0; i < model.scoreboard.length; i++){
+			for (let i = 0; i < model.scoreboard.length; i++) {
+
 				html += `
 								<tr>
 									<td class="scoreboardName">${model.scoreboard[i].name}</td>
